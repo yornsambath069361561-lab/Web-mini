@@ -7,6 +7,7 @@
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Checkerboard pattern for visualizing transparency */
         .checkerboard {
             background-color: #f0f0f0;
             background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), 
@@ -183,7 +184,7 @@
                     let errorMessage = errorDetails.error?.message || `HTTP Error ${response.status} (${response.statusText})`;
                     
                     if (response.status === 403) {
-                        errorMessage = "កំហុសសិទ្ធិអនុញ្ញាត (403): API Key មិនត្រឹមត្រូវ ឬ Model មិនត្រូវបានអនុញ្ញាត។ សូមសាកល្បងម្ដងទៀត។";
+                        errorMessage = "កំហុសសិទ្ធិអនុញ្ញាត (403): API Key មិនត្រឹមត្រូវ ឬ Model មិនត្រូវបានអនុញ្ញាត។ សូមពិនិត្យមើល Console Log របស់អ្នក។";
                     }
                     
                     throw new Error(errorMessage);
