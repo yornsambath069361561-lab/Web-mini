@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Finder Mini App</title>
+    <!-- MANDATORY: Load Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* CSS to match Telegram theme colors and ensure responsiveness */
+        body {
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+        h3 {
+            color: var(--tg-theme-text-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.25rem;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            /* Use Telegram Theme Primary Color */
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button:active {
+            filter: brightness(0.9);
+            transform: translateY(1px);
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--tg-theme-hint-color);
+            background-color: var(--tg-theme-secondary-bg-color);
+        }
+        /* Mobile adjustment for better spacing */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            button {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>🔍 សូមជ្រើសរើសប្រភេទ ID ដែលអ្នកចង់ស្វែងរក៖</h3>
+
+        <button onclick="requestEntity('user')">👤 User</button>
+        <button onclick="requestEntity('bot')">🤖 Bot</button>
+        <button onclick="requestEntity('group')">👥 Group</button>
+        <button onclick="requestEntity('channel')">📣 Channel</button>
+
+        <p id="status">ត្រៀមរួចរាល់...</p>
+    </div>
+
+    <script>
+        // Use unique IDs for requestUsers/requestChats calls
+        const REQUEST_IDS = {
+            USER: 1001,
+            BOT: 1002,
+            GROUP: 1003,
+            CHANNEL: 1004
+        };
+
+        const statusElement = document.getElementById('status');
+        let WebApp = null; // Telegram WebApp object
+
+        // Initialize the Web App
+        window.onload = function() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                WebApp = window.Telegram.WebApp;
+                WebApp.ready(); // Inform Telegram the App is ready
+                WebApp.expand(); // Expand Mini App to max height
+                statusElement.textContent = "ID Finder បានចាប់ផ្ដើម។";
+            } else {
+                statusElement.textContent = "🚫 Mini App នេះត្រូវតែបើកនៅក្នុង Telegram App ប៉ុណ្ណោះ។";
+            }
+        }
+
+        /**
+         * Requests the Telegram client to open the User/Chat selection dialog.
+         * @param {string} type - 'user', 'bot', 'group', or 'channel'
+         */
+        function requestEntity(type) {
+            if (!WebApp) {
+                statusElement.textContent = "🚫 Telegram Web App មិនទាន់ចាប់ផ្តើមទេ។";
+                return;
+            }
+
+            statusElement.textContent = `កំពុងស្នើសុំ ${type}...`;
+
+            // Function to handle the result returned from the Telegram dialog
+            const handleResult = (result) => {
+                // If no entity was selected, result will be null or empty array
+                if (!result || result.length === 0) {
+                    statusElement.textContent = "មិនបានជ្រើសរើសអ្វីសោះ។ សូមព្យាយាមម្តងទៀត។";
+                    return;
+                }
+                
+                let dataToSend = {};
+                const sharedEntity = result[0]; // Always take the first result since max_quantity is 1
+
+                // Extract data based on the type of entity shared
+                if (type === 'user' || type === 'bot') {
+                    // This is from requestUsers (sharedUser)
+                    dataToSend = {
+                        type: type,
+                        id: sharedEntity.user_id,
+                        name: `${sharedEntity.first_name || ''} ${sharedEntity.last_name || ''}`.trim() || 'Unknown User',
+                        username: sharedEntity.username || 'No username'
+                    };
+                    
+                } else if (type === 'group' || type === 'channel') {
+                    // This is from requestChats (sharedChat)
+                    dataToSend = {
+                        type: type,
+                        id: sharedEntity.chat_id,
+                        name: sharedEntity.title || 'Unknown Chat',
+                        username: sharedEntity.username || 'No username' // Channels/Groups might have a username (link)
+                    };
+                }
+                
+                // 3. Send the JSON data back to the Bot
+                // The Bot will receive this as a 'text' message containing a JSON string.
+                try {
+                    WebApp.sendData(JSON.stringify(dataToSend));
+                    statusElement.textContent = `បានផ្ញើ ID (${dataToSend.id}) ទៅកាន់ Bot រួចរាល់ហើយ!`;
+                    WebApp.close(); // Close the Mini App after successful data send
+                } catch (error) {
+                    statusElement.textContent = `Error sending data: ${error.message}`;
+                }
+            };
+
+
+            // Logic for opening the correct Telegram dialog
+            if (type === 'user') {
+                WebApp.requestUsers(
+                    { 
+                        request_id: REQUEST_IDS.USER, 
+                        max_quantity: 1, 
+                        user_is_bot: false, // Ensure we request a normal user
+                        request_name: true,
+                        request_username: true
+                    },
+                    handleResult
+                );
+            } else if (type === 'bot') {
+                WebApp.requestUsers(
+                    { 
+                        request_id: REQUEST_IDS.BOT, 
+                        max_quantity: 1, 
+                        user_is_bot: true, // Ensure we request a bot
+                        request_name: true,
+                        request_username: true
+                    },
+                    handleResult
+                );
+            } else if (type === 'group') {
+                WebApp.requestChats(
+                    { 
+                        request_id: REQUEST_IDS.GROUP, 
+                        chat_is_channel: false, // Request a group
+                        chat_is_forum: false, 
+                        request_title: true,
+                        request_username: true
+                    },
+                    handleResult
+                );
+            } else if (type === 'channel') {
+                WebApp.requestChats(
+                    { 
+                        request_id: REQUEST_IDS.CHANNEL, 
+                        chat_is_channel: true, // Request a channel
+                        request_title: true,
+                        request_username: true
+                    },
+                    handleResult
+                );
+            }
+        }
+    </script>
+</body>
+</html>
+
