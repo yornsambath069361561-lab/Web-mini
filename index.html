@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>កម្មវិធីកាត់ផ្ទៃខាងក្រោយរូបភាព</title>
+    <title>កម្មវិធីកាត់ផ្ទៃខាងក្រោយ AI</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Define the Checkerboard pattern for visualizing transparency */
         .checkerboard {
             background-color: #f0f0f0;
             background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), 
@@ -15,187 +14,223 @@
             background-size: 20px 20px;
             background-position: 0 0, 10px 10px;
         }
-        
-        /* Custom styles for the drop zone */
-        #drop-zone {
-            border: 3px dashed #d1d5db;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        #drop-zone.drag-over {
-            border-color: #2563eb;
-            background-color: #eff6ff;
-        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 flex flex-col items-center justify-start font-sans">
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center font-sans">
 
-    <div class="w-full max-w-2xl bg-white shadow-xl rounded-2xl p-6 md:p-8 mt-6">
+    <div class="w-full max-w-2xl bg-white shadow-2xl rounded-2xl p-6 md:p-8 mt-6">
         
         <!-- Header -->
         <header class="text-center mb-6">
-            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">✂️ កាត់ផ្ទៃខាងក្រោយរូបភាព</h1>
-            <p class="text-gray-600">ផ្ទុកឡើងរូបភាពរបស់អ្នកដើម្បីចាប់ផ្តើម។</p>
+            <h1 class="text-3xl font-extrabold text-purple-700 mb-2">✨ AI កាត់ផ្ទៃខាងក្រោយ</h1>
+            <p class="text-gray-600">ផ្ទុកឡើងរូបភាព (JPG/PNG) ដើម្បីប្រើ AI កាត់ផ្ទៃខាងក្រោយភ្លាមៗ។</p>
         </header>
 
-        <!-- Upload/Drop Zone -->
-        <div id="drop-zone" class="flex flex-col items-center justify-center p-8 rounded-xl bg-gray-50 hover:bg-gray-100 transition duration-200 mb-6" onclick="document.getElementById('file-input').click()">
-            <svg class="w-12 h-12 text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 014 4v2a4 4 0 01-8 0v-5m-4 5h8"></path></svg>
-            <p class="text-gray-700 font-semibold text-center">អូសនិងទម្លាក់រូបភាពនៅទីនេះ ឬចុចដើម្បីជ្រើសរើស</p>
-            <p class="text-sm text-gray-500 mt-1">PNG, JPG, JPEG (ទំហំអតិបរមា 5MB)</p>
-            <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="handleFileSelect(event)">
-        </div>
-
-        <!-- Notification/Status Message -->
-        <div id="message-box" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert">
-            <p class="font-bold">ចំណាំ៖</p>
-            <p id="status-text">កម្មវិធីនេះគឺជាការបង្ហាញ UI។ ការកាត់ផ្ទៃខាងក្រោយពិតប្រាកដគឺមិនអាចធ្វើបានដោយគ្មាន API ឬ AI ស្មុគស្មាញទេ។</p>
-        </div>
-
-        <!-- Result Display Area -->
-        <div id="result-area" class="hidden">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">លទ្ធផល</h2>
-            <div class="relative checkerboard w-full aspect-square rounded-xl shadow-inner flex items-center justify-center p-4">
-                <!-- The Canvas will be placed here -->
-                <canvas id="image-canvas" class="max-w-full max-h-full rounded-lg"></canvas>
+        <!-- Input Section -->
+        <div class="space-y-4">
+            <label class="block text-gray-700 font-semibold" for="file-input">១. ជ្រើសរើសរូបភាព:</label>
+            <input type="file" id="file-input" accept="image/png, image/jpeg" class="w-full text-gray-700 border border-gray-300 rounded-lg p-2 focus:ring-purple-500 focus:border-purple-500" onchange="previewImage()">
+            
+            <div id="image-preview-container" class="mt-4 hidden border border-gray-300 rounded-xl p-3 bg-gray-50 flex justify-center">
+                <img id="image-preview" class="max-h-64 object-contain rounded-lg shadow-md" alt="រូបភាពដើម">
             </div>
-        </div>
 
-        <!-- Action Button -->
-        <div class="mt-6">
-            <button id="download-button" onclick="downloadImage()" class="w-full py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 disabled:opacity-50" disabled>
-                ទាញយករូបភាព (PNG ថ្លា)
+            <button id="process-button" onclick="removeBackground()" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg hover:bg-purple-700 transition duration-200 disabled:opacity-50" disabled>
+                កាត់ផ្ទៃខាងក្រោយ
             </button>
         </div>
 
+        <!-- Status & Loading -->
+        <div id="status-box" class="mt-6 hidden p-4 rounded-lg text-center" role="alert">
+            <p id="status-text" class="font-medium"></p>
+        </div>
+
+        <!-- Result Display Area -->
+        <div id="result-area" class="mt-8 hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">២. លទ្ធផលដែលបានកាត់ចេញ</h2>
+            <div class="relative checkerboard w-full rounded-xl shadow-inner flex items-center justify-center p-4 min-h-[256px]">
+                <img id="result-image" class="max-w-full max-h-96 object-contain rounded-lg" alt="លទ្ធផល" onerror="this.style.display='none';">
+            </div>
+
+            <!-- Download Button -->
+            <div class="mt-6">
+                <button id="download-button" onclick="downloadImage()" class="w-full py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 disabled:opacity-50" disabled>
+                    ទាញយកលទ្ធផល (PNG)
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
-        const canvas = document.getElementById('image-canvas');
-        const ctx = canvas.getContext('2d');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const resultImage = document.getElementById('result-image');
+        const processButton = document.getElementById('process-button');
         const downloadButton = document.getElementById('download-button');
-        const messageBox = document.getElementById('message-box');
-        const resultArea = document.getElementById('result-area');
+        const statusBox = document.getElementById('status-box');
         const statusText = document.getElementById('status-text');
+        const resultArea = document.getElementById('result-area');
+        
+        let base64ImageData = null;
 
-        // --- Drag and Drop Handlers ---
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
-        });
-
-        dropZone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            let dt = e.dataTransfer;
-            let files = dt.files;
+        // --- Utility Functions ---
+        function setStatus(message, type = 'info') {
+            statusText.textContent = message;
+            statusBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
             
-            if (files.length) {
-                processFile(files[0]);
+            if (type === 'loading') {
+                statusBox.classList.add('bg-blue-100', 'text-blue-700');
+            } else if (type === 'success') {
+                statusBox.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                statusBox.classList.add('bg-red-100', 'text-red-700');
+            } else { // info
+                statusBox.classList.add('bg-gray-100', 'text-gray-700');
             }
+            statusBox.classList.remove('hidden');
         }
 
-        // --- File Selection Handler ---
-        function handleFileSelect(event) {
-            if (event.target.files.length) {
-                processFile(event.target.files[0]);
-            }
+        function clearResults() {
+            resultArea.classList.add('hidden');
+            resultImage.src = '';
+            downloadButton.disabled = true;
         }
 
-        /**
-         * Loads the file, validates it, and prepares the canvas.
-         * @param {File} file 
-         */
-        function processFile(file) {
-            messageBox.classList.add('hidden');
-            statusText.textContent = "កំពុងផ្ទុករូបភាព...";
+        // --- Image Handling ---
 
-            // 1. Validation
-            if (!file.type.startsWith('image/')) {
-                statusText.textContent = "ឯកសារដែលបានផ្ទុកឡើងមិនមែនជារូបភាពទេ។";
-                messageBox.classList.remove('hidden');
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                statusText.textContent = "ទំហំឯកសារធំជាង 5MB។ សូមផ្ទុកឯកសារតូចជាង។";
-                messageBox.classList.remove('hidden');
+        function previewImage() {
+            const file = fileInput.files[0];
+            clearResults();
+            base64ImageData = null;
+
+            if (!file) {
+                imagePreviewContainer.classList.add('hidden');
+                processButton.disabled = true;
+                setStatus("សូមជ្រើសរើសរូបភាព...", 'info');
                 return;
             }
 
-            // 2. Read the file
             const reader = new FileReader();
             reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    // 3. Set Canvas dimensions to match the image
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    // 4. Draw the image (Simulating background removal)
-                    // In a real app, complex logic would create a mask here.
-                    // For this simulation, we simply draw the original image onto the canvas 
-                    // which is necessary for the download function (toDataURL).
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, img.width, img.height);
-                    
-                    // 5. Update UI
-                    resultArea.classList.remove('hidden');
-                    downloadButton.disabled = false;
-                    statusText.textContent = "រូបភាពត្រូវបានផ្ទុកឡើងដោយជោគជ័យ។";
-                    messageBox.classList.remove('hidden');
-                    downloadButton.classList.remove('bg-green-600');
-                    downloadButton.classList.add('bg-blue-600'); 
-                    downloadButton.textContent = "ទាញយករូបភាព (PNG ថ្លា)";
-                };
-                img.onerror = () => {
-                    statusText.textContent = "មានបញ្ហាក្នុងការផ្ទុករូបភាព។";
-                    messageBox.classList.remove('hidden');
-                };
-                img.src = e.target.result;
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove('hidden');
+                processButton.disabled = false;
+                
+                // Extract Base64 part
+                const [header, data] = e.target.result.split(',');
+                if (data) {
+                    base64ImageData = data;
+                }
+                setStatus("រូបភាពបានផ្ទុកឡើងរួចរាល់។ ចុច 'កាត់ផ្ទៃខាងក្រោយ'។", 'success');
             };
             reader.readAsDataURL(file);
         }
 
+        // --- API Integration (Background Removal) ---
+
+        async function fetchWithRetry(url, options) {
+            const MAX_RETRIES = 3;
+            let lastError = null;
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${i + 1} failed: ${error.message}. Retrying in ${Math.pow(2, i)}s...`);
+                    if (i < MAX_RETRIES - 1) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                    }
+                }
+            }
+            throw new Error(`Failed to fetch after ${MAX_RETRIES} attempts: ${lastError.message}`);
+        }
+
+        async function removeBackground() {
+            if (!base64ImageData) {
+                setStatus("សូមផ្ទុកឡើងរូបភាពជាមុនសិន។", 'error');
+                return;
+            }
+
+            // Hide previous results
+            resultArea.classList.add('hidden');
+            downloadButton.disabled = true;
+            setStatus("🚀 កំពុងដំណើរការកាត់ផ្ទៃខាងក្រោយ... (សូមរង់ចាំបន្តិច)", 'loading');
+            processButton.disabled = true;
+
+            const userPrompt = "Remove the background from this image. The output image must only contain the foreground object/person with a completely transparent background. Do not add any new background color or context.";
+            const mimeType = fileInput.files[0].type;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: userPrompt },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64ImageData
+                                }
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    responseModalities: ['IMAGE', 'TEXT'] 
+                },
+            };
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                
+                if (base64Data) {
+                    const imageUrl = `data:image/png;base64,${base64Data}`;
+                    resultImage.src = imageUrl;
+                    resultArea.classList.remove('hidden');
+                    downloadButton.disabled = false;
+                    setStatus("✅ កាត់ផ្ទៃខាងក្រោយបានជោគជ័យ! រូបភាព PNG ថ្លាត្រៀមរួចរាល់។", 'success');
+                } else {
+                    setStatus("❌ បរាជ័យក្នុងការទទួលបានរូបភាពលទ្ធផលពី AI។ សូមព្យាយាមម្តងទៀត។", 'error');
+                    console.error("AI Response Error:", result);
+                }
+
+            } catch (error) {
+                setStatus(`❌ កំហុសក្នុងការហៅ API: ${error.message}`, 'error');
+                console.error("API Call Error:", error);
+            } finally {
+                processButton.disabled = false;
+            }
+        }
+
         /**
-         * Triggers the download of the canvas content as a PNG file.
+         * Triggers the download of the result image.
          */
         function downloadImage() {
-            if (downloadButton.disabled) return;
+            if (downloadButton.disabled || !resultImage.src) return;
 
-            // Convert canvas content to a data URL (PNG format inherently supports transparency)
-            const imageURL = canvas.toDataURL('image/png');
-
-            // Create a temporary link element to trigger the download
             const link = document.createElement('a');
-            link.href = imageURL;
-            link.download = 'removed_background_output.png';
+            link.href = resultImage.src;
+            link.download = 'ai_removed_background.png';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            statusText.textContent = "បានទាញយករូបភាពដោយជោគជ័យ! សូមត្រួតពិនិត្យឯកសាររបស់អ្នក។";
-            messageBox.classList.remove('hidden');
         }
-
-        // Initial setup for the status message
-        document.addEventListener('DOMContentLoaded', () => {
-            statusText.textContent = "កម្មវិធីនេះបង្ហាញពី UI និងមុខងារ Download។ ការកាត់ផ្ទៃខាងក្រោយពិតប្រាកដគឺមិនត្រូវបានអនុវត្តក្នុងកូដនេះទេ។";
-            messageBox.classList.remove('hidden');
-        });
 
     </script>
 </body>
